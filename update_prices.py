@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,179 +28,270 @@ WANTED_RETAILERS = {
 }
 
 
-def extract_promo_price(text):
+def load_existing():
+    try:
+        with DATA.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {
+            "product": {
+                "name": "Pepsi Max",
+                "pack": "24 × 330ml",
+                "units": 24
+            },
+            "generated_at": "",
+            "retailers": []
+        }
+
+
+def promo_price(text):
     if not text:
         return None
 
     match = re.search(
         r"£\s*(\d+(?:\.\d{1,2})?)",
-        text,
+        str(text)
     )
 
     if not match:
         return None
 
-    try:
-        return round(float(match.group(1)), 2)
-    except ValueError:
-        return None
+    return float(match.group(1))
 
 
-def call_apify():
+def run_apify():
     if not APIFY_TOKEN:
         raise RuntimeError(
-            "APIFY_TOKEN environment variable is missing"
+            "APIFY_TOKEN is missing from GitHub Actions secrets."
         )
+
+    query = urllib.parse.urlencode({
+        "maxTotalChargeUsd": "0.10",
+        "maxItems": "1"
+    })
+
+    url = f"{ACTOR_URL}?{query}"
 
     payload = {
         "productUrls": [PRODUCT_URL],
-        "maxResults": 1,
+        "maxResults": 1
     }
 
     body = json.dumps(payload).encode("utf-8")
 
     request = urllib.request.Request(
-        ACTOR_URL,
+        url,
         data=body,
         method="POST",
         headers={
-            "Content-Type": "application/json",
             "Authorization": f"Bearer {APIFY_TOKEN}",
-        },
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
     )
 
-    with urllib.request.urlopen(
-        request,
-        timeout=180,
-    ) as response:
-        return json.loads(
-            response.read().decode("utf-8")
+    try:
+        with urllib.request.urlopen(
+            request,
+            timeout=300
+        ) as response:
+
+            raw = response.read().decode("utf-8")
+
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode(
+            "utf-8",
+            errors="replace"
         )
 
+        print("")
+        print("========== APIFY ERROR ==========")
+        print(f"HTTP status: {error.code}")
+        print(error_body)
+        print("=================================")
+        print("")
 
-def build_retailer(item, today):
-    name = item.get("name")
+        raise RuntimeError(
+            f"Apify returned HTTP {error.code}. "
+            "See APIFY ERROR above."
+        ) from error
 
-    shelf_price = item.get("price")
-    promo_text = item.get("promoText")
+    except urllib.error.URLError as error:
+        raise RuntimeError(
+            f"Could not contact Apify: {error}"
+        ) from error
 
-    promo_price = extract_promo_price(promo_text)
-
-    price = shelf_price
-    regular_price = None
-    offer = ""
-
-    if promo_price is not None:
-        if shelf_price is not None:
-            regular_price = round(
-                float(shelf_price),
-                2,
-            )
-
-        price = promo_price
-        offer = promo_text or ""
-
-    if price is not None:
-        price = round(float(price), 2)
-
-    result = {
-        "name": name,
-        "price": price,
-        "currency": "GBP",
-        "status": "verified",
-        "offer": offer,
-        "checked": today,
-        "url": item.get("outboundUrl", ""),
-    }
-
-    if regular_price is not None:
-        result["regular_price"] = regular_price
-
-    price_per_unit = item.get("pricePerUnit")
-
-    if price_per_unit:
-        result["price_per_unit"] = price_per_unit
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as error:
+        print("Unexpected Apify response:")
+        print(raw[:2000])
+        raise RuntimeError(
+            "Apify did not return valid JSON."
+        ) from error
 
     return result
 
 
-def main():
-    today = datetime.now(
-        timezone.utc
-    ).date().isoformat()
+def build_retailers(item, old_data):
+    today = datetime.now(timezone.utc).date().isoformat()
 
-    data = call_apify()
-
-    if not isinstance(data, list) or not data:
-        raise RuntimeError(
-            "Apify returned no Pepsi Max data"
-        )
-
-    product = data[0]
-
-    retailers = product.get("retailers", [])
+    old_retailers = {
+        r.get("name"): r
+        for r in old_data.get("retailers", [])
+        if r.get("name")
+    }
 
     results = []
 
-    for retailer in retailers:
-        if retailer.get("name") not in WANTED_RETAILERS:
+    trolley_retailers = item.get("retailers", [])
+
+    for retailer in trolley_retailers:
+        name = retailer.get("name")
+
+        if name not in WANTED_RETAILERS:
             continue
 
-        results.append(
-            build_retailer(
-                retailer,
-                today,
-            )
+        shelf_price = retailer.get("price")
+        offer_text = retailer.get("promoText")
+
+        special_price = promo_price(offer_text)
+
+        # If Trolley gives a member/promotion price such as
+        # "£8.50 NECTAR", use it as the deal price.
+        deal_price = (
+            special_price
+            if special_price is not None
+            else shelf_price
         )
 
-    if not results:
-        raise RuntimeError(
-            "No expected supermarket prices were returned"
-        )
+        if deal_price is None:
+            continue
+
+        results.append({
+            "name": name,
+            "price": float(deal_price),
+            "regular_price": (
+                float(shelf_price)
+                if shelf_price is not None
+                else None
+            ),
+            "offer": offer_text or "",
+            "status": "verified",
+            "checked": today,
+            "url": retailer.get("outboundUrl") or "",
+            "error": ""
+        })
+
+    found = {r["name"] for r in results}
+
+    # Preserve an old value rather than deleting a supermarket
+    # if Trolley temporarily doesn't return it.
+    for name in WANTED_RETAILERS:
+        if name in found:
+            continue
+
+        old = old_retailers.get(name)
+
+        if old:
+            preserved = dict(old)
+            preserved["status"] = "stale"
+            preserved["error"] = (
+                "Retailer not returned by today's Trolley check."
+            )
+            results.append(preserved)
+        else:
+            results.append({
+                "name": name,
+                "price": None,
+                "regular_price": None,
+                "offer": "",
+                "status": "stale",
+                "checked": "",
+                "url": "",
+                "error": (
+                    "Retailer not returned by today's Trolley check."
+                )
+            })
 
     results.sort(
-        key=lambda x: (
-            x["price"]
-            if x["price"] is not None
+        key=lambda r: (
+            r.get("price") is None,
+            r.get("price")
+            if r.get("price") is not None
             else 999
         )
     )
+
+    return results
+
+
+def main():
+    old_data = load_existing()
+
+    print("Starting MaxDeal Pepsi Max price update...")
+    print("Calling Trolley scraper through Apify...")
+    print("Maximum charge for this run: $0.10")
+
+    items = run_apify()
+
+    if not isinstance(items, list) or not items:
+        raise RuntimeError(
+            "Apify completed but returned no product."
+        )
+
+    item = items[0]
+
+    product_name = str(item.get("productName", ""))
+
+    if (
+        "pepsi" not in product_name.lower()
+        or "24" not in product_name.lower()
+        or "330" not in product_name.lower()
+    ):
+        raise RuntimeError(
+            "Apify returned an unexpected product: "
+            f"{product_name}"
+        )
+
+    retailers = build_retailers(item, old_data)
 
     output = {
         "product": {
             "name": "Pepsi Max",
             "pack": "24 × 330ml",
-            "units": 24,
+            "units": 24
         },
         "generated_at": datetime.now(
             timezone.utc
         ).isoformat(),
-        "retailers": results,
+        "source": "Trolley.co.uk via Apify",
+        "retailers": retailers
     }
 
     DATA.parent.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     with DATA.open(
         "w",
-        encoding="utf-8",
-    ) as file:
+        encoding="utf-8"
+    ) as f:
         json.dump(
             output,
-            file,
+            f,
             indent=2,
-            ensure_ascii=False,
+            ensure_ascii=False
         )
 
-    print("Updated Pepsi Max prices:")
-
-    for retailer in results:
+    print("")
+    print("Price update successful:")
+    for retailer in retailers:
         print(
             retailer["name"],
-            retailer["price"],
-            retailer.get("offer", ""),
+            retailer.get("price"),
+            retailer.get("offer", "")
         )
 
 
