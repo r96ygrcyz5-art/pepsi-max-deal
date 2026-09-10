@@ -4,7 +4,7 @@
     "pack": "24 × 330ml",
     "units": 24
   },
-  "generated_at": "2026-09-10T16:45:42.904768+00:00",
+  "generated_at": "2026-09-10T16:56:37.125526+00:00",
   "retailers": [
     {
       "name": "Morrisons",
@@ -41,7 +41,7 @@
       "price": 12.0,
       "currency": "GBP",
       "status": "verified",
-      "offer": "",
+      "offer": "2 for £20.0",
       "checked": "2026-09-10",
       "url": "https://www.ocado.com/products/pepsi-max/376033011"
     },
@@ -52,7 +52,7 @@
       "status": "stale",
       "offer": "",
       "checked": "",
-      "url": "https://www.sainsburys.co.uk/groceries/browse/hot-drinks-soft-drinks-and-water/fizzy-drinks/cola/c%3A1019301",
+      "url": "https://www.sainsburys.co.uk/gol-ui/SearchResults/pepsi%20max%2024%20x%20330ml",
       "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     },
     {
