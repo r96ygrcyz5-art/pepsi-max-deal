@@ -4,7 +4,7 @@
     "pack": "24 \u00d7 330ml",
     "units": 24
   },
-  "generated_at": "2026-09-10T16:05:16.708718+00:00",
+  "generated_at": "2026-09-10T16:15:55.230444+00:00",
   "retailers": [
     {
       "name": "Morrisons",
@@ -22,7 +22,8 @@
       "status": "stale",
       "offer": "",
       "checked": "2026-08-19",
-      "error": "Automated check failed: Could not confidently identify product/price"
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack",
+      "url": "https://www.tesco.com/shop/en-GB/products/282774907"
     },
     {
       "name": "Asda",
@@ -41,6 +42,22 @@
       "offer": "2 for \u00a320",
       "checked": "2026-09-10",
       "url": "https://www.ocado.com/products/pepsi-max/376033011"
+    },
+    {
+      "name": "Sainsbury's",
+      "currency": "GBP",
+      "offer": "",
+      "url": "https://www.sainsburys.co.uk/gol-ui/SearchResults/pepsi%20max%2024%20x%20330ml",
+      "status": "stale",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack"
+    },
+    {
+      "name": "Iceland",
+      "currency": "GBP",
+      "offer": "",
+      "url": "https://www.iceland.co.uk/p/pepsi-max-no-sugar-cola-cans-24-x-330ml/47908.html",
+      "status": "stale",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack"
     }
   ]
 }
