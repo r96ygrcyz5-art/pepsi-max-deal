@@ -1,18 +1,19 @@
 {
   "product": {
     "name": "Pepsi Max",
-    "pack": "24 × 330ml",
+    "pack": "24 \u00d7 330ml",
     "units": 24
   },
-  "generated_at": "2026-09-10T16:48:00+01:00",
+  "generated_at": "2026-09-10T16:05:16.708718+00:00",
   "retailers": [
     {
       "name": "Morrisons",
-      "price": 8.00,
+      "price": 8.0,
       "currency": "GBP",
       "status": "verified",
-      "offer": "£8 offer",
-      "checked": "2026-09-10"
+      "offer": "\u00a38 offer",
+      "checked": "2026-09-10",
+      "url": "https://groceries.morrisons.com/products/pepsi-max-no-sugar-cola-cans-24-x-330ml/111904213"
     },
     {
       "name": "Tesco",
@@ -20,23 +21,26 @@
       "currency": "GBP",
       "status": "stale",
       "offer": "",
-      "checked": "2026-08-19"
+      "checked": "2026-08-19",
+      "error": "Automated check failed: Could not confidently identify product/price"
     },
     {
       "name": "Asda",
-      "price": 12.50,
+      "price": 12.5,
       "currency": "GBP",
       "status": "verified",
       "offer": "",
-      "checked": "2026-09-08"
+      "checked": "2026-09-10",
+      "url": "https://www.asda.com/groceries/product/sugar-free-diet-cola/pepsi-max-no-sugar-cola-cans-24-x-330ml/5934876"
     },
     {
       "name": "Ocado",
-      "price": 12.50,
+      "price": 12.5,
       "currency": "GBP",
       "status": "verified",
-      "offer": "2 for £20",
-      "checked": "2026-09-09"
+      "offer": "2 for \u00a320",
+      "checked": "2026-09-10",
+      "url": "https://www.ocado.com/products/pepsi-max/376033011"
     }
   ]
 }
