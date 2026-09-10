@@ -3,21 +3,22 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+
 from playwright.async_api import async_playwright
 
 DATA = Path("data/prices.json")
 
 SOURCES = {
     "Morrisons": {
-        "url": "https://groceries.morrisons.com/products/pepsi-max-no-sugar-cola-cans-24-x-330ml/111904213",
+        "url": "https://groceries.morrisons.com/products/pepsi-max-no-sugar-cola-cans-24-x-330ml",
         "mode": "generic",
     },
     "Tesco": {
-        "url": "https://www.tesco.com/shop/en-GB/products/282774907",
+        "url": "https://www.tesco.com/groceries/en-GB/products/282774907",
         "mode": "tesco",
     },
     "Asda": {
-        "url": "https://www.asda.com/groceries/product/sugar-free-diet-cola/pepsi-max-no-sugar-cola-cans-24-x-330ml/5934876",
+        "url": "https://www.asda.com/groceries/product/sugar-free-diet-cola/pepsi-max-no-sugar-cola-cans",
         "mode": "generic",
     },
     "Ocado": {
@@ -29,7 +30,7 @@ SOURCES = {
         "mode": "sainsburys",
     },
     "Iceland": {
-        "url": "https://www.iceland.co.uk/p/pepsi-max-no-sugar-cola-cans-24-x-330ml/47908.html",
+        "url": "https://www.iceland.co.uk/p/pepsi-max-no-sugar-cola-cans-24-x-330ml/",
         "mode": "iceland",
     },
 }
@@ -41,6 +42,7 @@ def plausible_price(value):
 
 def money_values(text):
     values = []
+
     for match in re.findall(r"£\s*(\d{1,2}(?:\.\d{1,2})?)", text):
         try:
             value = float(match)
@@ -48,228 +50,205 @@ def money_values(text):
                 values.append(value)
         except ValueError:
             pass
+
     return values
 
 
-def extract_generic(text):
+def looks_like_24_pack(text):
+    text = text.lower()
+
+    has_pepsi = "pepsi" in text and "max" in text
+
+    pack_patterns = [
+        r"24\s*[x×]\s*330\s*ml",
+        r"24\s*x\s*330",
+        r"24x330",
+        r"24\s*pack",
+        r"24\s*cans",
+    ]
+
+    has_pack = any(re.search(pattern, text) for pattern in pack_patterns)
+
+    return has_pepsi and has_pack
+
+
+async def extract_tesco(page):
+    # Tesco often exposes useful product information in rendered text
+    # even when the underlying page structure changes.
+    body = await page.locator("body").inner_text()
+
+    if not looks_like_24_pack(body):
+        return None, ""
+
+    lines = [line.strip() for line in body.splitlines() if line.strip()]
+
+    product_indexes = []
+
+    for i, line in enumerate(lines):
+        lower = line.lower()
+
+        if (
+            "pepsi" in lower
+            and "max" in lower
+            and (
+                "24" in lower
+                or "330ml" in lower
+                or "330 ml" in lower
+            )
+        ):
+            product_indexes.append(i)
+
+    candidates = []
+
+    for index in product_indexes:
+        start = max(0, index - 3)
+        end = min(len(lines), index + 12)
+
+        section = "\n".join(lines[start:end])
+
+        for price in money_values(section):
+            candidates.append(price)
+
+    if candidates:
+        # For a single 24-pack, the first sensible product-area price
+        # is normally the standard/current selling price.
+        return candidates[0], ""
+
+    # Tesco sometimes embeds JSON price data in the page source.
+    html = await page.content()
+
     patterns = [
         r'"price"\s*:\s*"?(\d{1,2}\.\d{2})"?',
-        r'(?:actual price|now|price)[^£]{0,40}£\s*(\d{1,2}(?:\.\d{1,2})?)',
-        r'£\s*(\d{1,2}(?:\.\d{1,2})?)',
+        r'"currentPrice"\s*:\s*"?(\d{1,2}\.\d{2})"?',
+        r'"actualPrice"\s*:\s*"?(\d{1,2}\.\d{2})"?',
     ]
 
     for pattern in patterns:
-        values = []
-        for match in re.findall(pattern, text, flags=re.I):
+        matches = re.findall(pattern, html, re.I)
+
+        for match in matches:
             try:
                 value = float(match)
+
                 if plausible_price(value):
-                    values.append(value)
+                    return value, ""
             except ValueError:
                 pass
 
-        if values:
-            return min(values)
-
-    return None
+    return None, ""
 
 
-def extract_tesco(text):
-    lower = text.lower()
+async def extract_generic(page):
+    body = await page.locator("body").inner_text()
 
-    product_pos = lower.find("pepsi max no sugar cola cans 24x330ml")
-    if product_pos == -1:
-        product_pos = lower.find("pepsi max no sugar cola cans 24 x 330ml")
+    if not looks_like_24_pack(body):
+        return None, ""
 
-    if product_pos == -1:
-        return None, None
-
-    block = text[product_pos:product_pos + 1800]
-
-    clubcard = re.search(
-        r"£\s*(\d{1,2}(?:\.\d{1,2})?)\s*clubcard price",
-        block,
-        flags=re.I,
-    )
-
-    prices = money_values(block)
-
-    loyalty = float(clubcard.group(1)) if clubcard else None
-
-    standard = None
-    for price in prices:
-        if loyalty is None or abs(price - loyalty) > 0.01:
-            if price >= 7:
-                standard = price
-                break
-
-    return standard, loyalty
-
-
-def extract_sainsburys(text):
-    lower = text.lower()
-
-    product_pos = lower.find("pepsi max")
-    if product_pos == -1:
-        return None, None
-
-    block = text[product_pos:product_pos + 2200]
-
-    nectar = re.search(
-        r"(?:nectar price|with nectar)[^£]{0,80}£\s*(\d{1,2}(?:\.\d{1,2})?)",
-        block,
-        flags=re.I,
-    )
-
-    prices = money_values(block)
-
-    loyalty = float(nectar.group(1)) if nectar else None
-
-    standard = None
-    for price in prices:
-        if loyalty is None or abs(price - loyalty) > 0.01:
-            if price >= 7:
-                standard = price
-                break
-
-    return standard, loyalty
-
-
-def extract_iceland(text):
-    lower = text.lower()
-
-    product_pos = lower.find("pepsi max no sugar cola cans 24")
-    if product_pos == -1:
-        product_pos = lower.find("pepsi max 24 x 330ml")
-
-    if product_pos == -1:
-        return None
-
-    block = text[product_pos:product_pos + 1200]
-
-    prices = money_values(block)
+    prices = money_values(body)
 
     if not prices:
-        return None
+        return None, ""
 
-    return prices[0]
-
-
-def product_is_correct(text):
-    lower = text.lower()
-
-    has_pepsi = "pepsi max" in lower
-    has_24 = "24x330ml" in lower or "24 x 330ml" in lower or "7920ml" in lower
-
-    return has_pepsi and has_24
+    return prices[0], ""
 
 
-async def check_retailer(page, name, source):
-    await page.goto(
-        source["url"],
-        wait_until="domcontentloaded",
-        timeout=45000,
-    )
-
-    await page.wait_for_timeout(3500)
-
-    body = await page.locator("body").inner_text()
-    html = await page.content()
-    combined = html + "\n" + body
-
-    if not product_is_correct(combined):
-        raise ValueError("Could not confidently identify Pepsi Max 24-pack")
-
-    mode = source["mode"]
-
+async def extract_price(page, mode):
     if mode == "tesco":
-        price, loyalty = extract_tesco(body)
+        return await extract_tesco(page)
 
-    elif mode == "sainsburys":
-        price, loyalty = extract_sainsburys(body)
-
-    elif mode == "iceland":
-        price = extract_iceland(body)
-        loyalty = None
-
-    else:
-        price = extract_generic(combined)
-        loyalty = None
-
-    if price is None:
-        raise ValueError("Could not confidently identify product price")
-
-    return price, loyalty
+    return await extract_generic(page)
 
 
 async def main():
-    data = json.loads(DATA.read_text())
+    if DATA.exists():
+        with DATA.open("r", encoding="utf-8") as f:
+            old_data = json.load(f)
+    else:
+        old_data = {
+            "product": {
+                "name": "Pepsi Max",
+                "pack": "24 × 330ml",
+                "units": 24,
+            },
+            "retailers": [],
+        }
 
-    existing = {
+    previous = {
         item["name"]: item
-        for item in data.get("retailers", [])
+        for item in old_data.get("retailers", [])
     }
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    results = []
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        browser = await p.chromium.launch(headless=True)
 
         context = await browser.new_context(
+            locale="en-GB",
             user_agent=(
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) "
-                "AppleWebKit/605.1.15 Version/18.0 "
-                "Mobile/15E148 Safari/604.1"
-            )
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/128.0.0.0 Safari/537.36"
+            ),
         )
 
-        results = []
-
         for name, source in SOURCES.items():
-            item = existing.get(
-                name,
-                {
-                    "name": name,
-                    "currency": "GBP",
-                    "offer": "",
-                },
-            )
+            print(f"Checking {name}...")
 
-            item["url"] = source["url"]
+            old = previous.get(name, {})
+
+            item = {
+                "name": name,
+                "price": old.get("price"),
+                "currency": "GBP",
+                "status": "stale",
+                "offer": old.get("offer", ""),
+                "checked": old.get("checked", ""),
+                "url": source["url"],
+            }
 
             page = await context.new_page()
 
             try:
-                price, loyalty = await check_retailer(
-                    page,
-                    name,
-                    source,
+                await page.goto(
+                    source["url"],
+                    wait_until="domcontentloaded",
+                    timeout=60000,
                 )
 
-                item["price"] = round(price, 2)
-                item["status"] = "verified"
-                item["checked"] = today
+                await page.wait_for_timeout(6000)
 
-                item.pop("error", None)
+                price, offer = await extract_price(
+                    page,
+                    source["mode"],
+                )
 
-                if loyalty is not None:
-                    item["loyalty_price"] = round(loyalty, 2)
+                if price is not None:
+                    item["price"] = round(price, 2)
+                    item["status"] = "verified"
+                    item["offer"] = offer
+                    item["checked"] = datetime.now(
+                        timezone.utc
+                    ).date().isoformat()
 
-                    if name == "Tesco":
-                        item["loyalty_scheme"] = "Clubcard"
-                    elif name == "Sainsbury's":
-                        item["loyalty_scheme"] = "Nectar"
+                    print(f"{name}: £{price:.2f}")
 
                 else:
-                    item.pop("loyalty_price", None)
-                    item.pop("loyalty_scheme", None)
+                    item["error"] = (
+                        "Automated check failed: "
+                        "Could not confidently identify "
+                        "Pepsi Max 24-pack price"
+                    )
+
+                    print(f"{name}: no verified price")
 
             except Exception as exc:
-                item["status"] = "stale"
                 item["error"] = (
                     "Automated check failed: "
-                    + str(exc)[:160]
+                    + str(exc)[:180]
                 )
+
+                print(f"{name}: {exc}")
 
             finally:
                 await page.close()
@@ -278,12 +257,29 @@ async def main():
 
         await browser.close()
 
-    data["retailers"] = results
-    data["generated_at"] = datetime.now(timezone.utc).isoformat()
+    output = {
+        "product": {
+            "name": "Pepsi Max",
+            "pack": "24 × 330ml",
+            "units": 24,
+        },
+        "generated_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
+        "retailers": results,
+    }
 
-    DATA.write_text(
-        json.dumps(data, indent=2) + "\n"
-    )
+    DATA.parent.mkdir(parents=True, exist_ok=True)
+
+    with DATA.open("w", encoding="utf-8") as f:
+        json.dump(
+            output,
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    print("Finished updating prices.")
 
 
 if __name__ == "__main__":
