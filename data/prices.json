@@ -1,422 +1,58 @@
-import asyncio
-import json
-import re
-from datetime import datetime, timezone
-from pathlib import Path
-
-from playwright.async_api import async_playwright
-
-DATA = Path("data/prices.json")
-
-SOURCES = {
-    "Morrisons": {
-        "url": "https://groceries.morrisons.com/products/pepsi-max-no-sugar-cola-cans-24-x-330ml",
-        "mode": "morrisons",
+{
+  "product": {
+    "name": "Pepsi Max",
+    "pack": "24 × 330ml",
+    "units": 24
+  },
+  "generated_at": "2026-09-10T17:40:00+01:00",
+  "retailers": [
+    {
+      "name": "Morrisons",
+      "price": 8.0,
+      "currency": "GBP",
+      "status": "verified",
+      "offer": "£8 offer",
+      "checked": "2026-09-10"
     },
-    "Tesco": {
-        "url": "https://www.tesco.com/groceries/en-GB/products/282774907",
-        "mode": "tesco",
+    {
+      "name": "Tesco",
+      "price": 11.25,
+      "currency": "GBP",
+      "status": "stale",
+      "offer": "",
+      "checked": "2026-08-19"
     },
-    "Asda": {
-        "url": "https://www.asda.com/groceries/product/sugar-free-diet-cola/pepsi-max-no-sugar-cola-cans",
-        "mode": "asda",
+    {
+      "name": "Asda",
+      "price": 12.5,
+      "currency": "GBP",
+      "status": "stale",
+      "offer": "",
+      "checked": "2026-09-10"
     },
-    "Ocado": {
-        "url": "https://www.ocado.com/products/pepsi-max/376033011",
-        "mode": "ocado",
+    {
+      "name": "Ocado",
+      "price": 12.0,
+      "currency": "GBP",
+      "status": "verified",
+      "offer": "",
+      "checked": "2026-09-10"
     },
-    "Sainsbury's": {
-        "url": "https://www.sainsburys.co.uk/gol-ui/SearchResults/pepsi%20max%2024%20x%20330ml",
-        "mode": "sainsburys",
+    {
+      "name": "Sainsbury's",
+      "price": null,
+      "currency": "GBP",
+      "status": "stale",
+      "offer": "",
+      "checked": ""
     },
-    "Iceland": {
-        "url": "https://www.iceland.co.uk/p/pepsi-max-no-sugar-cola-cans-24-x-330ml/",
-        "mode": "iceland",
-    },
+    {
+      "name": "Iceland",
+      "price": null,
+      "currency": "GBP",
+      "status": "stale",
+      "offer": "",
+      "checked": ""
+    }
+  ]
 }
-
-PACK_PATTERNS = [
-    r"24\s*[x×]\s*330\s*ml",
-    r"24x330ml",
-    r"24\s*x\s*330",
-    r"24\s*cans",
-    r"24\s*pack",
-]
-
-PRICE_PATTERNS = [
-    r'"price"\s*:\s*"?(\d{1,2}(?:\.\d{1,2})?)"?',
-    r'"currentPrice"\s*:\s*"?(\d{1,2}(?:\.\d{1,2})?)"?',
-    r'"actualPrice"\s*:\s*"?(\d{1,2}(?:\.\d{1,2})?)"?',
-    r'£\s*(\d{1,2}(?:\.\d{1,2})?)',
-]
-
-
-def plausible_price(value):
-    return 5.0 <= value <= 25.0
-
-
-def has_target_pack(text):
-    lower = text.lower()
-
-    if "pepsi" not in lower or "max" not in lower:
-        return False
-
-    return any(
-        re.search(pattern, lower, flags=re.I)
-        for pattern in PACK_PATTERNS
-    )
-
-
-def extract_all_prices(text):
-    values = []
-
-    for pattern in PRICE_PATTERNS:
-        for match in re.findall(pattern, text, flags=re.I):
-            try:
-                value = float(match)
-
-                if plausible_price(value):
-                    values.append(value)
-            except ValueError:
-                pass
-
-    # preserve order but remove duplicates
-    seen = set()
-    unique = []
-
-    for value in values:
-        rounded = round(value, 2)
-
-        if rounded not in seen:
-            seen.add(rounded)
-            unique.append(rounded)
-
-    return unique
-
-
-def find_product_section(text, radius=2500):
-    lower = text.lower()
-
-    phrases = [
-        "pepsi max no sugar cola cans 24",
-        "pepsi max 24 x 330",
-        "pepsi max 24x330",
-        "pepsi max 24 pack",
-    ]
-
-    for phrase in phrases:
-        pos = lower.find(phrase)
-
-        if pos != -1:
-            start = max(0, pos - 500)
-            end = min(len(text), pos + radius)
-            return text[start:end]
-
-    return text
-
-
-def pick_standard_price(prices):
-    if not prices:
-        return None
-
-    sensible = [p for p in prices if 7.0 <= p <= 20.0]
-
-    if not sensible:
-        return None
-
-    return sensible[0]
-
-
-def extract_loyalty(section, scheme):
-    if scheme == "Nectar":
-        patterns = [
-            r'nectar[^£]{0,120}£\s*(\d{1,2}(?:\.\d{1,2})?)',
-            r'£\s*(\d{1,2}(?:\.\d{1,2})?)[^£]{0,100}nectar',
-        ]
-    else:
-        patterns = [
-            r'clubcard[^£]{0,120}£\s*(\d{1,2}(?:\.\d{1,2})?)',
-            r'£\s*(\d{1,2}(?:\.\d{1,2})?)[^£]{0,100}clubcard',
-        ]
-
-    for pattern in patterns:
-        match = re.search(pattern, section, flags=re.I)
-
-        if match:
-            try:
-                value = float(match.group(1))
-
-                if plausible_price(value):
-                    return round(value, 2)
-            except ValueError:
-                pass
-
-    return None
-
-
-async def rendered_and_html(page):
-    body = await page.locator("body").inner_text()
-    html = await page.content()
-
-    return body, html
-
-
-async def check_generic(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined)
-    prices = extract_all_prices(section)
-
-    return pick_standard_price(prices), None, None, ""
-
-
-async def check_tesco(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined)
-
-    prices = extract_all_prices(section)
-    loyalty = extract_loyalty(section, "Clubcard")
-
-    standard_candidates = [
-        p for p in prices
-        if loyalty is None or abs(p - loyalty) > 0.01
-    ]
-
-    standard = pick_standard_price(standard_candidates)
-
-    return standard, loyalty, "Clubcard" if loyalty else None, ""
-
-
-async def check_sainsburys(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined, radius=3500)
-
-    prices = extract_all_prices(section)
-    loyalty = extract_loyalty(section, "Nectar")
-
-    standard_candidates = [
-        p for p in prices
-        if loyalty is None or abs(p - loyalty) > 0.01
-    ]
-
-    standard = pick_standard_price(standard_candidates)
-
-    return standard, loyalty, "Nectar" if loyalty else None, ""
-
-
-async def check_asda(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined, radius=3000)
-    prices = extract_all_prices(section)
-
-    return pick_standard_price(prices), None, None, ""
-
-
-async def check_iceland(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined, radius=3000)
-    prices = extract_all_prices(section)
-
-    return pick_standard_price(prices), None, None, ""
-
-
-async def check_ocado(page):
-    body, html = await rendered_and_html(page)
-    combined = body + "\n" + html
-
-    if not has_target_pack(combined):
-        return None, None, None, ""
-
-    section = find_product_section(combined, radius=3000)
-    prices = extract_all_prices(section)
-
-    offer = ""
-
-    multi = re.search(
-        r'(?:2\s*for|buy\s*2\s*for)\s*£\s*(\d{1,2}(?:\.\d{1,2})?)',
-        section,
-        flags=re.I,
-    )
-
-    if multi:
-        offer = f"2 for £{float(multi.group(1)):.2f}"
-
-    return pick_standard_price(prices), None, None, offer
-
-
-async def check_retailer(page, mode):
-    if mode == "tesco":
-        return await check_tesco(page)
-
-    if mode == "sainsburys":
-        return await check_sainsburys(page)
-
-    if mode == "asda":
-        return await check_asda(page)
-
-    if mode == "iceland":
-        return await check_iceland(page)
-
-    if mode == "ocado":
-        return await check_ocado(page)
-
-    return await check_generic(page)
-
-
-async def main():
-    with DATA.open("r", encoding="utf-8") as f:
-        old_data = json.load(f)
-
-    previous = {
-        item["name"]: item
-        for item in old_data.get("retailers", [])
-    }
-
-    today = datetime.now(timezone.utc).date().isoformat()
-    results = []
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-
-        context = await browser.new_context(
-            locale="en-GB",
-            user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/128.0.0.0 Safari/537.36"
-            ),
-        )
-
-        for name, source in SOURCES.items():
-            old = previous.get(name, {})
-
-            item = {
-                "name": name,
-                "price": old.get("price"),
-                "currency": "GBP",
-                "status": "stale",
-                "offer": old.get("offer", ""),
-                "checked": old.get("checked", ""),
-                "url": source["url"],
-            }
-
-            if "loyalty_price" in old:
-                item["loyalty_price"] = old["loyalty_price"]
-
-            if "loyalty_scheme" in old:
-                item["loyalty_scheme"] = old["loyalty_scheme"]
-
-            page = await context.new_page()
-
-            try:
-                await page.goto(
-                    source["url"],
-                    wait_until="domcontentloaded",
-                    timeout=60000,
-                )
-
-                await page.wait_for_timeout(7000)
-
-                price, loyalty_price, loyalty_scheme, offer = (
-                    await check_retailer(
-                        page,
-                        source["mode"],
-                    )
-                )
-
-                if price is not None:
-                    item["price"] = round(price, 2)
-                    item["status"] = "verified"
-                    item["checked"] = today
-                    item["offer"] = offer or item.get("offer", "")
-
-                    item.pop("error", None)
-
-                    if loyalty_price is not None:
-                        item["loyalty_price"] = round(
-                            loyalty_price,
-                            2,
-                        )
-                        item["loyalty_scheme"] = loyalty_scheme
-                    else:
-                        item.pop("loyalty_price", None)
-                        item.pop("loyalty_scheme", None)
-
-                    print(
-                        f'{name}: verified '
-                        f'£{item["price"]:.2f}'
-                    )
-
-                else:
-                    item["status"] = "stale"
-                    item["error"] = (
-                        "Automated check failed: "
-                        "Could not confidently identify "
-                        "Pepsi Max 24-pack price"
-                    )
-
-                    print(f"{name}: stale")
-
-            except Exception as exc:
-                item["status"] = "stale"
-                item["error"] = (
-                    "Automated check failed: "
-                    + str(exc)[:180]
-                )
-
-                print(f"{name}: stale - {exc}")
-
-            finally:
-                await page.close()
-
-            results.append(item)
-
-        await browser.close()
-
-    output = {
-        "product": {
-            "name": "Pepsi Max",
-            "pack": "24 × 330ml",
-            "units": 24,
-        },
-        "generated_at": datetime.now(
-            timezone.utc
-        ).isoformat(),
-        "retailers": results,
-    }
-
-    with DATA.open("w", encoding="utf-8") as f:
-        json.dump(
-            output,
-            f,
-            indent=2,
-            ensure_ascii=False,
-        )
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
