@@ -4,15 +4,17 @@
     "pack": "24 × 330ml",
     "units": 24
   },
-  "generated_at": "2026-09-10T17:40:00+01:00",
+  "generated_at": "2026-09-10T16:45:42.904768+00:00",
   "retailers": [
     {
       "name": "Morrisons",
       "price": 8.0,
       "currency": "GBP",
-      "status": "verified",
+      "status": "stale",
       "offer": "£8 offer",
-      "checked": "2026-09-10"
+      "checked": "2026-09-10",
+      "url": "https://groceries.morrisons.com/products/pepsi-max-no-sugar-cola-cans-24-x-330ml",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     },
     {
       "name": "Tesco",
@@ -20,7 +22,9 @@
       "currency": "GBP",
       "status": "stale",
       "offer": "",
-      "checked": "2026-08-19"
+      "checked": "2026-08-19",
+      "url": "https://www.tesco.com/groceries/en-GB/products/282774907",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     },
     {
       "name": "Asda",
@@ -28,7 +32,9 @@
       "currency": "GBP",
       "status": "stale",
       "offer": "",
-      "checked": "2026-09-10"
+      "checked": "2026-09-10",
+      "url": "https://www.asda.com/groceries/product/sugar-free-diet-cola/pepsi-max-no-sugar-cola-cans",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     },
     {
       "name": "Ocado",
@@ -36,7 +42,8 @@
       "currency": "GBP",
       "status": "verified",
       "offer": "",
-      "checked": "2026-09-10"
+      "checked": "2026-09-10",
+      "url": "https://www.ocado.com/products/pepsi-max/376033011"
     },
     {
       "name": "Sainsbury's",
@@ -44,7 +51,9 @@
       "currency": "GBP",
       "status": "stale",
       "offer": "",
-      "checked": ""
+      "checked": "",
+      "url": "https://www.sainsburys.co.uk/groceries/browse/hot-drinks-soft-drinks-and-water/fizzy-drinks/cola/c%3A1019301",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     },
     {
       "name": "Iceland",
@@ -52,7 +61,9 @@
       "currency": "GBP",
       "status": "stale",
       "offer": "",
-      "checked": ""
+      "checked": "",
+      "url": "https://www.iceland.co.uk/p/pepsi-max-no-sugar-cola-cans-24-x-330ml/",
+      "error": "Automated check failed: Could not confidently identify Pepsi Max 24-pack price"
     }
   ]
 }
