@@ -3,7 +3,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-DATA = Path("data/prices.json")
+PRICES_FILE = Path("data/prices.json")
+HISTORY_FILE = Path("data/history.json")
 
 BASKETSCOUT_URL = (
     "https://api.basketscout.co.uk/"
@@ -41,11 +42,32 @@ def get_basketscout_data():
 def pounds(pence):
     if pence is None:
         return None
-
     return round(pence / 100, 2)
 
 
+def load_history():
+    if not HISTORY_FILE.exists():
+        return {
+            "product_id": 23023,
+            "snapshots": []
+        }
+
+    try:
+        with HISTORY_FILE.open(
+            "r",
+            encoding="utf-8"
+        ) as f:
+            return json.load(f)
+
+    except (json.JSONDecodeError, OSError):
+        return {
+            "product_id": 23023,
+            "snapshots": []
+        }
+
+
 def main():
+
     print("Starting MaxDeal price update...")
     print("Source: BasketScout product 23023")
 
@@ -64,6 +86,7 @@ def main():
     retailers = []
 
     for store in product.get("stores", []):
+
         name = store.get("store_name")
 
         if name not in WANTED_STORES:
@@ -81,31 +104,23 @@ def main():
             store.get("promo_price_pence")
         )
 
-        # Single-pack price is what somebody pays
-        # if they only want one case.
-        single_price = normal_price
-
-        # Loyalty price can apply to one case,
-        # so use it for the main comparison.
         if loyalty_price is not None:
             effective_price = loyalty_price
             deal_type = "loyalty"
-
         else:
-            effective_price = single_price
+            effective_price = normal_price
             deal_type = "standard"
 
-        # Multi-buy prices are kept separately.
-        # They do NOT replace the single-pack price.
         multibuy_price = None
 
         if (
             promo_price is not None
-            and store.get("promo_type") == "n_for_x"
+            and
+            store.get("promo_type") == "n_for_x"
         ):
             multibuy_price = promo_price
 
-        retailer = {
+        retailers.append({
             "name": name,
             "price": effective_price,
             "regular_price": normal_price,
@@ -113,45 +128,35 @@ def main():
                 store.get("was_price_pence")
             ),
             "loyalty_price": loyalty_price,
-            "loyalty_scheme": (
-                store.get("loyalty_scheme")
-            ),
-            "loyalty_ends": (
-                store.get("loyalty_ends_at")
-            ),
-            "multibuy_price_each": (
-                multibuy_price
-            ),
-            "offer": (
+            "loyalty_scheme":
+                store.get("loyalty_scheme"),
+            "loyalty_ends":
+                store.get("loyalty_ends_at"),
+            "multibuy_price_each":
+                multibuy_price,
+            "offer":
                 store.get("promo_description")
-                or ""
-            ),
+                or "",
             "deal_type": deal_type,
-            "checked": (
-                store.get("checked_at")
-            ),
-            "url": (
+            "checked":
+                store.get("checked_at"),
+            "url":
                 store.get("store_url")
-                or ""
-            ),
-            "match_type": (
-                store.get("match_type")
-            ),
-            "verified": bool(
-                store.get("is_verified")
-            ),
+                or "",
+            "match_type":
+                store.get("match_type"),
+            "verified":
+                bool(store.get("is_verified")),
             "status": "verified",
             "error": "",
-        }
-
-        retailers.append(retailer)
+        })
 
     retailers.sort(
         key=lambda r: (
             r["price"] is None,
             r["price"]
             if r["price"] is not None
-            else 999,
+            else 999
         )
     )
 
@@ -160,6 +165,8 @@ def main():
             "BasketScout returned no matching supermarkets."
         )
 
+    now = datetime.now(timezone.utc)
+
     output = {
         "product": {
             "id": 23023,
@@ -167,23 +174,20 @@ def main():
             "pack": "24 × 330ml",
             "units": 24,
             "gtin": "4060800130754",
-            "image_url": product.get(
-                "image_url"
-            ),
+            "image_url":
+                product.get("image_url"),
         },
-        "generated_at": datetime.now(
-            timezone.utc
-        ).isoformat(),
+        "generated_at": now.isoformat(),
         "source": "BasketScout",
         "retailers": retailers,
     }
 
-    DATA.parent.mkdir(
+    PRICES_FILE.parent.mkdir(
         parents=True,
         exist_ok=True
     )
 
-    with DATA.open(
+    with PRICES_FILE.open(
         "w",
         encoding="utf-8"
     ) as f:
@@ -194,15 +198,86 @@ def main():
             ensure_ascii=False
         )
 
+    # -------------------------
+    # SAVE PRICE HISTORY
+    # -------------------------
+
+    history = load_history()
+
+    today = now.date().isoformat()
+
+    snapshot = {
+        "date": today,
+        "prices": {}
+    }
+
+    for retailer in retailers:
+        snapshot["prices"][
+            retailer["name"]
+        ] = {
+            "price":
+                retailer["price"],
+            "regular_price":
+                retailer["regular_price"],
+            "loyalty_price":
+                retailer["loyalty_price"],
+            "multibuy_price_each":
+                retailer[
+                    "multibuy_price_each"
+                ],
+        }
+
+    # Only keep one snapshot per day.
+    history["snapshots"] = [
+        item
+        for item in history.get(
+            "snapshots", []
+        )
+        if item.get("date") != today
+    ]
+
+    history["snapshots"].append(
+        snapshot
+    )
+
+    history["snapshots"].sort(
+        key=lambda x: x.get(
+            "date", ""
+        )
+    )
+
+    HISTORY_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with HISTORY_FILE.open(
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump(
+            history,
+            f,
+            indent=2,
+            ensure_ascii=False
+        )
+
     print("")
-    print("SUCCESS — BasketScout prices updated")
+    print(
+        "SUCCESS — prices and history updated"
+    )
+    print(
+        "History now contains",
+        len(history["snapshots"]),
+        "daily snapshot(s)"
+    )
     print("")
 
     for retailer in retailers:
         print(
             retailer["name"],
             retailer["price"],
-            retailer["offer"],
+            retailer["offer"]
         )
 
 
