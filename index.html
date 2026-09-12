@@ -3,349 +3,87 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f6fb">
+<meta name="theme-color" content="#edf3ff">
 <title>Pepsi Max Deal</title>
 
 <style>
 :root{
- --ink:#101828;
- --muted:#667085;
- --line:#e7eaf0;
- --bg:#f4f6fb;
- --card:#fff;
- --accent:#2256d8;
- --good:#087443;
- --goodbg:#e9f8ef;
- --dark:#111827;
- --deal:#7a2e9e;
- --dealbg:#f6eefe;
+ --ink:#101828;--muted:#667085;--line:#e4e9f2;--bg:#f3f6fb;
+ --card:#fff;--blue:#1746c8;--dark:#101828;--green:#087443;
+ --greenbg:#e9f8ef;--purple:#7138a8;--purplebg:#f3eafb;
+ --offer:#175cd3;--offerbg:#eaf2ff;
 }
-
 *{box-sizing:border-box}
-
-body{
- margin:0;
- background:var(--bg);
- color:var(--ink);
- font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
-}
-
-.app{
- max-width:430px;
- margin:auto;
- min-height:100vh;
- padding:
-  env(safe-area-inset-top)
-  16px
-  calc(100px + env(safe-area-inset-bottom));
-}
-
-.top{
- display:flex;
- justify-content:space-between;
- align-items:center;
- padding:18px 2px 12px;
-}
-
-.brand small{
- display:block;
- color:var(--muted);
- font-size:12px;
- font-weight:700;
- letter-spacing:.08em;
- text-transform:uppercase;
-}
-
-.brand h1{
- font-size:28px;
- line-height:1.05;
- margin:3px 0 0;
-}
-
-.avatar{
- width:40px;
- height:40px;
- border-radius:50%;
- background:var(--dark);
- color:#fff;
- display:grid;
- place-items:center;
- font-weight:800;
-}
-
-.product{
- background:#fff;
- border:1px solid var(--line);
- border-radius:24px;
- padding:18px;
- display:flex;
- gap:14px;
- align-items:center;
- box-shadow:0 8px 28px #1018280a;
-}
-
-.can{
- width:58px;
- height:82px;
- border-radius:12px 12px 15px 15px;
- background:var(--dark);
- color:#fff;
- display:grid;
- place-items:center;
- text-align:center;
- font-size:11px;
- font-weight:900;
- line-height:1.05;
-}
-
-.product h2{
- margin:0 0 4px;
- font-size:20px;
-}
-
-.product p{
- margin:0;
- color:var(--muted);
- font-size:14px;
-}
-
-.status{
- margin:12px 2px 0;
- padding:10px 12px;
- border-radius:14px;
- background:var(--goodbg);
- color:var(--good);
- font-size:12px;
- font-weight:750;
- border:1px solid #cdeedb;
-}
-
-.hero{
- margin-top:14px;
- background:var(--dark);
- color:#fff;
- border-radius:26px;
- padding:21px;
-}
-
-.kicker{
- font-size:12px;
- font-weight:800;
- letter-spacing:.08em;
- text-transform:uppercase;
- opacity:.7;
-}
-
-.price{
- font-size:52px;
- font-weight:850;
- letter-spacing:-.04em;
- margin:5px 0 0;
-}
-
-.store{
- font-size:18px;
- font-weight:750;
-}
-
-.meta{
- margin-top:12px;
- display:flex;
- gap:8px;
- flex-wrap:wrap;
-}
-
-.pill{
- background:#ffffff16;
- border:1px solid #ffffff1f;
- padding:7px 9px;
- border-radius:999px;
- font-size:12px;
-}
-
-.section-title{
- display:flex;
- justify-content:space-between;
- align-items:end;
- margin:24px 2px 10px;
-}
-
-.section-title h3{
- margin:0;
- font-size:19px;
-}
-
-.section-title span{
- font-size:12px;
- color:var(--muted);
-}
-
-.list{
- background:var(--card);
- border:1px solid var(--line);
- border-radius:22px;
- overflow:hidden;
-}
-
-.row{
- display:grid;
- grid-template-columns:32px 1fr auto;
- gap:10px;
- align-items:center;
- padding:15px 16px;
- border-bottom:1px solid var(--line);
-}
-
-.row:last-child{
- border-bottom:0;
-}
-
-.rank{
- font-weight:800;
- color:#98a2b3;
-}
-
-.shop{
- font-weight:760;
-}
-
-.sub{
- font-size:12px;
- color:var(--muted);
- margin-top:3px;
- line-height:1.4;
-}
-
-.offer{
- display:inline-block;
- margin-top:5px;
- padding:4px 7px;
- border-radius:999px;
- font-size:11px;
- font-weight:750;
-}
-
-.loyalty{
- background:var(--dealbg);
- color:var(--deal);
-}
-
-.promo{
- background:#eef4ff;
- color:#2b5fb8;
-}
-
-.amount{
- text-align:right;
- font-weight:850;
- font-size:17px;
-}
-
-.best{
- color:var(--good);
-}
-
-.link{
- display:inline-block;
- margin-top:7px;
- font-size:12px;
- font-weight:750;
- color:var(--accent);
- text-decoration:none;
-}
-
-.notice{
- font-size:12px;
- color:var(--muted);
- line-height:1.45;
- margin:14px 4px;
-}
-
-.nav{
- position:fixed;
- left:50%;
- transform:translateX(-50%);
- bottom:0;
- width:min(430px,100%);
- background:#ffffffee;
- backdrop-filter:blur(18px);
- border-top:1px solid var(--line);
- display:grid;
- grid-template-columns:repeat(4,1fr);
- padding:9px 10px calc(9px + env(safe-area-inset-bottom));
-}
-
-.nav button{
- border:0;
- background:transparent;
- padding:5px;
- color:#98a2b3;
- font-size:11px;
-}
-
-.nav b{
- display:block;
- font-size:20px;
-}
-
-.nav .active{
- color:var(--accent);
-}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+.app{width:min(100%,720px);margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(105px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;padding:20px 3px 14px}
+.brand small{display:block;color:var(--blue);font-size:12px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+.brand h1{font-size:29px;line-height:1.05;margin:4px 0 0;letter-spacing:-.03em}
+.logo{width:42px;height:42px;border-radius:14px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:900;font-size:18px;box-shadow:0 7px 18px #1746c833}
+.product{background:#fff;border:1px solid var(--line);border-radius:25px;padding:15px 17px;display:flex;gap:17px;align-items:center;box-shadow:0 8px 30px #1018280a}
+.product-image-wrap{width:88px;height:88px;flex:0 0 88px;display:grid;place-items:center;border-radius:18px;background:#f7f8fb;overflow:hidden}
+.product-image{width:100%;height:100%;object-fit:contain;padding:5px}
+.product h2{margin:0 0 5px;font-size:22px}.product p{margin:0;color:var(--muted);font-size:14px}
+.live{margin:12px 2px 0;padding:10px 13px;border-radius:14px;background:var(--greenbg);color:var(--green);font-size:12px;font-weight:750;border:1px solid #cdeedb}
+.hero{margin-top:14px;background:linear-gradient(135deg,var(--blue),#102b72);color:#fff;border-radius:28px;padding:23px;box-shadow:0 14px 35px #1746c82b}
+.kicker{font-size:12px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;opacity:.8}
+.hero-price{font-size:58px;font-weight:900;letter-spacing:-.055em;line-height:1;margin:8px 0 5px}
+.hero-store{font-size:20px;font-weight:800}
+.hero-meta{margin-top:15px;display:flex;gap:8px;flex-wrap:wrap}
+.hero-pill{background:#ffffff17;border:1px solid #ffffff2b;padding:7px 10px;border-radius:999px;font-size:12px}
+.hero-link{display:inline-block;margin-top:17px;background:#fff;color:var(--blue);text-decoration:none;font-size:14px;font-weight:850;padding:11px 16px;border-radius:13px}
+.section-title{display:flex;justify-content:space-between;align-items:end;margin:26px 3px 11px}
+.section-title h3{margin:0;font-size:20px}.section-title span{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:9px}
+.row{background:#fff;border:1px solid var(--line);border-radius:18px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:11px;align-items:center;padding:15px;box-shadow:0 4px 15px #10182808}
+.rank{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#f2f4f7;color:#667085;font-size:12px;font-weight:850}
+.rank.first{background:var(--greenbg);color:var(--green)}
+.shop{font-weight:820;font-size:16px}
+.sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:850}
+.loyalty{background:var(--purplebg);color:var(--purple)}
+.promo{background:var(--offerbg);color:var(--offer)}
+.was{background:#f2f4f7;color:#475467}
+.view{display:inline-block;margin-top:7px;color:var(--blue);text-decoration:none;font-size:12px;font-weight:800}
+.amount{text-align:right;font-size:18px;font-weight:900;white-space:nowrap}.amount.best{color:var(--green)}
+.notice{font-size:11px;color:var(--muted);line-height:1.5;margin:17px 4px}
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(720px,100%);background:#ffffffef;backdrop-filter:blur(18px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:9px 10px calc(9px + env(safe-area-inset-bottom));z-index:10}
+.nav button{border:0;background:transparent;padding:5px;color:#98a2b3;font-size:11px}.nav b{display:block;font-size:20px;margin-bottom:2px}.nav .active{color:var(--blue)}
+@media(min-width:600px){.app{padding-left:28px;padding-right:28px}.product{padding:20px 23px}.product-image-wrap{width:108px;height:108px;flex-basis:108px}.hero{padding:28px}.hero-price{font-size:66px}.row{padding:18px 20px}}
 </style>
 </head>
 
 <body>
-
 <main class="app">
 
 <header class="top">
- <div class="brand">
-  <small>MaxDeal</small>
-  <h1>Pepsi Max Deal</h1>
- </div>
- <div class="avatar">M</div>
+ <div class="brand"><small>MaxDeal</small><h1>Pepsi Max Deal</h1></div>
+ <div class="logo">M</div>
 </header>
 
 <section class="product">
- <div class="can">
-  PEPSI<br>
-  MAX<br>
-  <span style="font-size:8px;opacity:.7">24 PACK</span>
- </div>
- <div>
-  <h2>Pepsi Max</h2>
-  <p>24 × 330ml cans · UK supermarkets</p>
- </div>
+ <div class="product-image-wrap"><img id="productImage" class="product-image" alt="Pepsi Max 24 pack"></div>
+ <div><h2>Pepsi Max</h2><p>24 × 330ml cans</p><p>Compare UK supermarkets</p></div>
 </section>
 
-<div id="status" class="status">
- Loading latest prices…
-</div>
+<div id="status" class="live">● Loading today's prices…</div>
 
 <section class="hero">
  <div class="kicker">Cheapest today</div>
- <div id="heroPrice" class="price">—</div>
- <div id="heroStore" class="store">Loading…</div>
-
- <div class="meta">
-  <span id="saving" class="pill">Calculating saving</span>
-  <span id="checked" class="pill">Checking date</span>
+ <div id="heroPrice" class="hero-price">—</div>
+ <div id="heroStore" class="hero-store">Loading…</div>
+ <div class="hero-meta">
+  <span id="saving" class="hero-pill">Finding best saving</span>
+  <span id="checked" class="hero-pill">Checking price</span>
  </div>
+ <a id="heroLink" class="hero-link" href="#" target="_blank" rel="noopener">View cheapest deal →</a>
 </section>
 
-<div class="section-title">
- <h3>Supermarket prices</h3>
- <span>Single pack price</span>
-</div>
-
+<div class="section-title"><h3>Compare prices</h3><span>Lowest first</span></div>
 <section id="priceList" class="list"></section>
 
-<p class="notice">
- Prices are supplied by BasketScout and refreshed automatically.
- Loyalty prices and multi-buy offers are shown separately so you can see
- what you would actually pay for one 24-pack.
-</p>
-
+<p class="notice">Prices are refreshed automatically using BasketScout data. Loyalty prices are clearly labelled. Multi-buy prices are shown separately and do not replace the price of buying one pack. Retailer prices can change after the latest check.</p>
 </main>
 
 <nav class="nav">
@@ -356,155 +94,79 @@ body{
 </nav>
 
 <script>
-const money = n => '£' + Number(n).toFixed(2);
+const money=n=>'£'+Number(n).toFixed(2);
 
 function shortDate(value){
- if(!value) return '';
- return new Date(value).toLocaleDateString('en-GB',{
-  day:'numeric',
-  month:'short'
- });
+ if(!value)return '';
+ return new Date(value).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
 
 function checkedText(value){
- if(!value) return '';
- return new Date(value).toLocaleString('en-GB',{
-  day:'numeric',
-  month:'short',
-  hour:'2-digit',
-  minute:'2-digit'
- });
+ if(!value)return '';
+ return new Date(value).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 }
 
 async function load(){
  try{
-  const r = await fetch(
-   'data/prices.json?ts=' + Date.now(),
-   {cache:'no-store'}
-  );
+  const response=await fetch('data/prices.json?ts='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('Could not load data');
+  const data=await response.json();
 
-  if(!r.ok) throw Error('data');
+  if(data.product.image_url)document.getElementById('productImage').src=data.product.image_url;
 
-  const d = await r.json();
+  const valid=data.retailers.filter(x=>Number.isFinite(x.price)).sort((a,b)=>a.price-b.price);
+  if(!valid.length)throw Error('No prices');
 
-  const valid = d.retailers
-   .filter(x => Number.isFinite(x.price))
-   .sort((a,b) => a.price - b.price);
+  const best=valid[0];
+  const highest=Math.max(...valid.map(x=>x.regular_price??x.price));
 
-  const best = valid[0];
+  document.getElementById('heroPrice').textContent=money(best.price);
 
-  const highestSingle = Math.max(
-   ...valid.map(x => x.regular_price ?? x.price)
-  );
+  let heroText=best.name+' • '+Math.round(best.price/data.product.units*100)+'p per can';
+  if(best.deal_type==='loyalty')heroText+=' • '+(best.loyalty_scheme||'loyalty').toUpperCase();
 
-  document.getElementById('heroPrice').textContent =
-   money(best.price);
+  document.getElementById('heroStore').textContent=heroText;
+  document.getElementById('saving').textContent='Save '+money(highest-best.price)+' vs highest price';
+  document.getElementById('checked').textContent='Checked '+checkedText(best.checked);
+  document.getElementById('status').textContent='● Prices refreshed '+new Date(data.generated_at).toLocaleString('en-GB');
 
-  let heroSuffix =
-   Math.round(best.price / d.product.units * 100) +
-   'p per can';
+  const heroLink=document.getElementById('heroLink');
+  if(best.url)heroLink.href=best.url;else heroLink.style.display='none';
 
-  if(best.deal_type === 'loyalty'){
-   heroSuffix += ' · ' +
-    (best.loyalty_scheme || 'loyalty').toUpperCase();
-  }
+  document.getElementById('priceList').innerHTML=valid.map((x,i)=>{
+   let badges='';
 
-  document.getElementById('heroStore').textContent =
-   best.name + ' • ' + heroSuffix;
+   if(x.loyalty_price){
+    badges+=`<span class="badge loyalty">${(x.loyalty_scheme||'Loyalty').toUpperCase()}${x.loyalty_ends?' · ends '+shortDate(x.loyalty_ends):''}</span>`;
+   }
 
-  document.getElementById('saving').textContent =
-   'Save ' +
-   money(highestSingle - best.price) +
-   ' vs highest single-pack price';
+   if(x.multibuy_price_each){
+    badges+=`<span class="badge promo">${x.offer} · ${money(x.multibuy_price_each)} each</span>`;
+   }
 
-  document.getElementById('checked').textContent =
-   'Checked ' + checkedText(best.checked);
+   if(x.was_price&&x.was_price>x.regular_price){
+    badges+=`<span class="badge was">Was ${money(x.was_price)}</span>`;
+   }
 
-  document.getElementById('status').textContent =
-   '● Prices refreshed ' +
-   new Date(d.generated_at).toLocaleString('en-GB');
-
-  document.getElementById('priceList').innerHTML =
-   valid.map((x,i) => {
-
-    let badges = '';
-
-    if(x.loyalty_price){
-     badges += `
-      <div class="offer loyalty">
-       ${x.loyalty_scheme
-        ? x.loyalty_scheme.toUpperCase()
-        : 'LOYALTY'}
-       ${x.loyalty_ends
-        ? ' · ends ' + shortDate(x.loyalty_ends)
-        : ''}
-      </div>`;
-    }
-
-    if(x.multibuy_price_each){
-     badges += `
-      <div class="offer promo">
-       ${x.offer}
-       · ${money(x.multibuy_price_each)} each
-      </div>`;
-    }
-
-    if(
-     x.was_price &&
-     x.was_price > x.regular_price
-    ){
-     badges += `
-      <div class="offer promo">
-       Was ${money(x.was_price)}
-      </div>`;
-    }
-
-    return `
-     <div class="row">
-
-      <div class="rank">
-       ${i+1}
-      </div>
-
-      <div>
-       <div class="shop">
-        ${x.name}
-       </div>
-
-       <div class="sub">
-        ${Math.round(x.price/d.product.units*100)}p per can
-        · checked ${checkedText(x.checked)}
-       </div>
-
-       ${badges}
-
-       ${x.url
-        ? `<a class="link"
-             href="${x.url}"
-             target="_blank"
-             rel="noopener">
-             View deal
-           </a>`
-        : ''
-       }
-      </div>
-
-      <div class="amount ${x===best?'best':''}">
-       ${money(x.price)}
-      </div>
-
+   return `
+    <article class="row">
+     <div class="rank ${i===0?'first':''}">${i+1}</div>
+     <div>
+      <div class="shop">${x.name}</div>
+      <div class="sub">${Math.round(x.price/data.product.units*100)}p per can · checked ${checkedText(x.checked)}</div>
+      ${badges?`<div class="badges">${badges}</div>`:''}
+      ${x.url?`<a class="view" href="${x.url}" target="_blank" rel="noopener">View deal →</a>`:''}
      </div>
-    `;
-   }).join('');
+     <div class="amount ${i===0?'best':''}">${money(x.price)}</div>
+    </article>`;
+  }).join('');
 
- }catch(e){
-  document.getElementById('status').textContent =
-   'Could not load price data.';
+ }catch(error){
+  document.getElementById('status').textContent='Could not load the latest prices.';
  }
 }
 
 load();
 </script>
-
 </body>
 </html>
