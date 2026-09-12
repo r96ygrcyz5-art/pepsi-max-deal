@@ -1,55 +1,510 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f6fb"><title>Pepsi Max Deal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fb">
+<title>Pepsi Max Deal</title>
+
 <style>
-:root{--ink:#101828;--muted:#667085;--line:#e7eaf0;--bg:#f4f6fb;--card:#fff;--accent:#2256d8;--good:#087443;--goodbg:#e9f8ef;--warn:#a15c00;--warnbg:#fff5df}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
-.app{max-width:430px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(92px + env(safe-area-inset-bottom))}
-.top{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 12px}.brand small{display:block;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.brand h1{font-size:28px;line-height:1.05;margin:3px 0 0}
-.avatar{width:40px;height:40px;border-radius:50%;background:#111827;color:white;display:grid;place-items:center;font-weight:800}
-.product{background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 28px #1018280a}
-.can{width:58px;height:82px;border-radius:12px 12px 15px 15px;background:#111827;color:#fff;display:grid;place-items:center;text-align:center;font-size:11px;font-weight:900;line-height:1.05}
-.product h2{margin:0 0 4px;font-size:20px}.product p{margin:0;color:var(--muted);font-size:14px}
-.status{margin:12px 2px 0;padding:10px 12px;border-radius:14px;background:var(--goodbg);color:var(--good);font-size:12px;font-weight:750;border:1px solid #cdeedb}
-.hero{margin-top:14px;background:#111827;color:#fff;border-radius:26px;padding:21px}.kicker{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
-.price{font-size:52px;font-weight:850;letter-spacing:-.04em;margin:5px 0 0}.store{font-size:18px;font-weight:750}.meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}.pill{background:#ffffff16;border:1px solid #ffffff1f;padding:7px 9px;border-radius:999px;font-size:12px}
-.section-title{display:flex;justify-content:space-between;align-items:end;margin:24px 2px 10px}.section-title h3{margin:0;font-size:19px}.section-title span{font-size:12px;color:var(--muted)}
-.list{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden}.row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:15px 16px;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}
-.rank{font-weight:800;color:#98a2b3}.shop{font-weight:760}.sub{font-size:12px;color:var(--muted);margin-top:2px}.amount{text-align:right;font-weight:850;font-size:17px}.best{color:var(--good)}
-.badge{font-size:10px;padding:3px 6px;border-radius:999px;margin-left:5px}.verified{background:var(--goodbg);color:var(--good)}.stale{background:var(--warnbg);color:var(--warn)}
-.notice{font-size:12px;color:var(--muted);line-height:1.45;margin:14px 4px}.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(430px,100%);background:#ffffffee;backdrop-filter:blur(18px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:9px 10px calc(9px + env(safe-area-inset-bottom))}
-.nav button{border:0;background:transparent;padding:5px;color:#98a2b3;font-size:11px}.nav b{display:block;font-size:20px}.nav .active{color:var(--accent)}
-</style></head>
-<body><main class="app">
-<header class="top"><div class="brand"><small>MaxDeal</small><h1>Pepsi Max Deal</h1></div><div class="avatar">M</div></header>
-<section class="product"><div class="can">PEPSI<br>MAX<br><span style="font-size:8px;opacity:.7">24 PACK</span></div><div><h2>Pepsi Max</h2><p>24 × 330ml cans · UK supermarkets</p></div></section>
-<div id="status" class="status">Loading latest stored prices…</div>
-<section class="hero"><div class="kicker">Cheapest verified price</div><div id="heroPrice" class="price">—</div><div id="heroStore" class="store">Loading…</div><div class="meta"><span id="saving" class="pill">Calculating saving</span><span id="checked" class="pill">Checking date</span></div></section>
-<div class="section-title"><h3>Supermarket prices</h3><span>Lowest first</span></div><section id="priceList" class="list"></section>
-<p class="notice">The app reads <strong>data/prices.json</strong> each time it opens. The included cloud workflow refreshes that file daily. Retailer sites can change layout or block automated access, so failed checks keep the previous price and mark it stale rather than silently publishing a made-up figure.</p>
+:root{
+ --ink:#101828;
+ --muted:#667085;
+ --line:#e7eaf0;
+ --bg:#f4f6fb;
+ --card:#fff;
+ --accent:#2256d8;
+ --good:#087443;
+ --goodbg:#e9f8ef;
+ --dark:#111827;
+ --deal:#7a2e9e;
+ --dealbg:#f6eefe;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--ink);
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
+}
+
+.app{
+ max-width:430px;
+ margin:auto;
+ min-height:100vh;
+ padding:
+  env(safe-area-inset-top)
+  16px
+  calc(100px + env(safe-area-inset-bottom));
+}
+
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:18px 2px 12px;
+}
+
+.brand small{
+ display:block;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:700;
+ letter-spacing:.08em;
+ text-transform:uppercase;
+}
+
+.brand h1{
+ font-size:28px;
+ line-height:1.05;
+ margin:3px 0 0;
+}
+
+.avatar{
+ width:40px;
+ height:40px;
+ border-radius:50%;
+ background:var(--dark);
+ color:#fff;
+ display:grid;
+ place-items:center;
+ font-weight:800;
+}
+
+.product{
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:24px;
+ padding:18px;
+ display:flex;
+ gap:14px;
+ align-items:center;
+ box-shadow:0 8px 28px #1018280a;
+}
+
+.can{
+ width:58px;
+ height:82px;
+ border-radius:12px 12px 15px 15px;
+ background:var(--dark);
+ color:#fff;
+ display:grid;
+ place-items:center;
+ text-align:center;
+ font-size:11px;
+ font-weight:900;
+ line-height:1.05;
+}
+
+.product h2{
+ margin:0 0 4px;
+ font-size:20px;
+}
+
+.product p{
+ margin:0;
+ color:var(--muted);
+ font-size:14px;
+}
+
+.status{
+ margin:12px 2px 0;
+ padding:10px 12px;
+ border-radius:14px;
+ background:var(--goodbg);
+ color:var(--good);
+ font-size:12px;
+ font-weight:750;
+ border:1px solid #cdeedb;
+}
+
+.hero{
+ margin-top:14px;
+ background:var(--dark);
+ color:#fff;
+ border-radius:26px;
+ padding:21px;
+}
+
+.kicker{
+ font-size:12px;
+ font-weight:800;
+ letter-spacing:.08em;
+ text-transform:uppercase;
+ opacity:.7;
+}
+
+.price{
+ font-size:52px;
+ font-weight:850;
+ letter-spacing:-.04em;
+ margin:5px 0 0;
+}
+
+.store{
+ font-size:18px;
+ font-weight:750;
+}
+
+.meta{
+ margin-top:12px;
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+}
+
+.pill{
+ background:#ffffff16;
+ border:1px solid #ffffff1f;
+ padding:7px 9px;
+ border-radius:999px;
+ font-size:12px;
+}
+
+.section-title{
+ display:flex;
+ justify-content:space-between;
+ align-items:end;
+ margin:24px 2px 10px;
+}
+
+.section-title h3{
+ margin:0;
+ font-size:19px;
+}
+
+.section-title span{
+ font-size:12px;
+ color:var(--muted);
+}
+
+.list{
+ background:var(--card);
+ border:1px solid var(--line);
+ border-radius:22px;
+ overflow:hidden;
+}
+
+.row{
+ display:grid;
+ grid-template-columns:32px 1fr auto;
+ gap:10px;
+ align-items:center;
+ padding:15px 16px;
+ border-bottom:1px solid var(--line);
+}
+
+.row:last-child{
+ border-bottom:0;
+}
+
+.rank{
+ font-weight:800;
+ color:#98a2b3;
+}
+
+.shop{
+ font-weight:760;
+}
+
+.sub{
+ font-size:12px;
+ color:var(--muted);
+ margin-top:3px;
+ line-height:1.4;
+}
+
+.offer{
+ display:inline-block;
+ margin-top:5px;
+ padding:4px 7px;
+ border-radius:999px;
+ font-size:11px;
+ font-weight:750;
+}
+
+.loyalty{
+ background:var(--dealbg);
+ color:var(--deal);
+}
+
+.promo{
+ background:#eef4ff;
+ color:#2b5fb8;
+}
+
+.amount{
+ text-align:right;
+ font-weight:850;
+ font-size:17px;
+}
+
+.best{
+ color:var(--good);
+}
+
+.link{
+ display:inline-block;
+ margin-top:7px;
+ font-size:12px;
+ font-weight:750;
+ color:var(--accent);
+ text-decoration:none;
+}
+
+.notice{
+ font-size:12px;
+ color:var(--muted);
+ line-height:1.45;
+ margin:14px 4px;
+}
+
+.nav{
+ position:fixed;
+ left:50%;
+ transform:translateX(-50%);
+ bottom:0;
+ width:min(430px,100%);
+ background:#ffffffee;
+ backdrop-filter:blur(18px);
+ border-top:1px solid var(--line);
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+}
+
+.nav button{
+ border:0;
+ background:transparent;
+ padding:5px;
+ color:#98a2b3;
+ font-size:11px;
+}
+
+.nav b{
+ display:block;
+ font-size:20px;
+}
+
+.nav .active{
+ color:var(--accent);
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+<header class="top">
+ <div class="brand">
+  <small>MaxDeal</small>
+  <h1>Pepsi Max Deal</h1>
+ </div>
+ <div class="avatar">M</div>
+</header>
+
+<section class="product">
+ <div class="can">
+  PEPSI<br>
+  MAX<br>
+  <span style="font-size:8px;opacity:.7">24 PACK</span>
+ </div>
+ <div>
+  <h2>Pepsi Max</h2>
+  <p>24 × 330ml cans · UK supermarkets</p>
+ </div>
+</section>
+
+<div id="status" class="status">
+ Loading latest prices…
+</div>
+
+<section class="hero">
+ <div class="kicker">Cheapest today</div>
+ <div id="heroPrice" class="price">—</div>
+ <div id="heroStore" class="store">Loading…</div>
+
+ <div class="meta">
+  <span id="saving" class="pill">Calculating saving</span>
+  <span id="checked" class="pill">Checking date</span>
+ </div>
+</section>
+
+<div class="section-title">
+ <h3>Supermarket prices</h3>
+ <span>Single pack price</span>
+</div>
+
+<section id="priceList" class="list"></section>
+
+<p class="notice">
+ Prices are supplied by BasketScout and refreshed automatically.
+ Loyalty prices and multi-buy offers are shown separately so you can see
+ what you would actually pay for one 24-pack.
+</p>
+
 </main>
-<nav class="nav"><button class="active"><b>⌂</b>Deals</button><button><b>⌕</b>Search</button><button><b>♡</b>Watchlist</button><button><b>⚙</b>Settings</button></nav>
+
+<nav class="nav">
+ <button class="active"><b>⌂</b>Deals</button>
+ <button><b>⌕</b>Search</button>
+ <button><b>♡</b>Watchlist</button>
+ <button><b>⚙</b>Settings</button>
+</nav>
+
 <script>
-const money=n=>'£'+Number(n).toFixed(2);
+const money = n => '£' + Number(n).toFixed(2);
+
+function shortDate(value){
+ if(!value) return '';
+ return new Date(value).toLocaleDateString('en-GB',{
+  day:'numeric',
+  month:'short'
+ });
+}
+
+function checkedText(value){
+ if(!value) return '';
+ return new Date(value).toLocaleString('en-GB',{
+  day:'numeric',
+  month:'short',
+  hour:'2-digit',
+  minute:'2-digit'
+ });
+}
+
 async function load(){
  try{
-  const r=await fetch('data/prices.json?ts='+Date.now(),{cache:'no-store'}); if(!r.ok)throw Error('data');
-  const d=await r.json(), valid=d.retailers.filter(x=>Number.isFinite(x.price)).sort((a,b)=>a.price-b.price);
-  const verified=valid.filter(x=>x.status==='verified'); const best=(verified[0]||valid[0]);
-  const highest=Math.max(...verified.map(x=>x.price));
-  document.getElementById('heroPrice').textContent=money(best.price);
-  document.getElementById('heroStore').textContent=best.name+' • '+Math.round(best.price/d.product.units*100)+'p per can';
-  document.getElementById('saving').textContent='Save '+money(highest-best.price)+' vs highest verified';
-  document.getElementById('checked').textContent='Checked '+best.checked;
-  document.getElementById('status').textContent='● Daily data file updated '+new Date(d.generated_at).toLocaleString('en-GB');
-  document.getElementById('priceList').innerHTML=valid.map((x,i)=>`
-   <div class="row"><div class="rank">${i+1}</div><div><div class="shop">${x.name}
-   <span class="badge ${x.status==='verified'?'verified':'stale'}">${x.status==='verified'?'VERIFIED':'STALE'}</span></div>
-   <div class="sub">${Math.round(x.price/d.product.units*100)}p per can · checked ${x.checked}${x.offer?' · '+x.offer:''}</div></div>
-   <div class="amount ${x===best?'best':''}">${money(x.price)}</div></div>`).join('');
- }catch(e){document.getElementById('status').textContent='Could not load price data.'}
+  const r = await fetch(
+   'data/prices.json?ts=' + Date.now(),
+   {cache:'no-store'}
+  );
+
+  if(!r.ok) throw Error('data');
+
+  const d = await r.json();
+
+  const valid = d.retailers
+   .filter(x => Number.isFinite(x.price))
+   .sort((a,b) => a.price - b.price);
+
+  const best = valid[0];
+
+  const highestSingle = Math.max(
+   ...valid.map(x => x.regular_price ?? x.price)
+  );
+
+  document.getElementById('heroPrice').textContent =
+   money(best.price);
+
+  let heroSuffix =
+   Math.round(best.price / d.product.units * 100) +
+   'p per can';
+
+  if(best.deal_type === 'loyalty'){
+   heroSuffix += ' · ' +
+    (best.loyalty_scheme || 'loyalty').toUpperCase();
+  }
+
+  document.getElementById('heroStore').textContent =
+   best.name + ' • ' + heroSuffix;
+
+  document.getElementById('saving').textContent =
+   'Save ' +
+   money(highestSingle - best.price) +
+   ' vs highest single-pack price';
+
+  document.getElementById('checked').textContent =
+   'Checked ' + checkedText(best.checked);
+
+  document.getElementById('status').textContent =
+   '● Prices refreshed ' +
+   new Date(d.generated_at).toLocaleString('en-GB');
+
+  document.getElementById('priceList').innerHTML =
+   valid.map((x,i) => {
+
+    let badges = '';
+
+    if(x.loyalty_price){
+     badges += `
+      <div class="offer loyalty">
+       ${x.loyalty_scheme
+        ? x.loyalty_scheme.toUpperCase()
+        : 'LOYALTY'}
+       ${x.loyalty_ends
+        ? ' · ends ' + shortDate(x.loyalty_ends)
+        : ''}
+      </div>`;
+    }
+
+    if(x.multibuy_price_each){
+     badges += `
+      <div class="offer promo">
+       ${x.offer}
+       · ${money(x.multibuy_price_each)} each
+      </div>`;
+    }
+
+    if(
+     x.was_price &&
+     x.was_price > x.regular_price
+    ){
+     badges += `
+      <div class="offer promo">
+       Was ${money(x.was_price)}
+      </div>`;
+    }
+
+    return `
+     <div class="row">
+
+      <div class="rank">
+       ${i+1}
+      </div>
+
+      <div>
+       <div class="shop">
+        ${x.name}
+       </div>
+
+       <div class="sub">
+        ${Math.round(x.price/d.product.units*100)}p per can
+        · checked ${checkedText(x.checked)}
+       </div>
+
+       ${badges}
+
+       ${x.url
+        ? `<a class="link"
+             href="${x.url}"
+             target="_blank"
+             rel="noopener">
+             View deal
+           </a>`
+        : ''
+       }
+      </div>
+
+      <div class="amount ${x===best?'best':''}">
+       ${money(x.price)}
+      </div>
+
+     </div>
+    `;
+   }).join('');
+
+ }catch(e){
+  document.getElementById('status').textContent =
+   'Could not load price data.';
+ }
 }
+
 load();
-</script></body></html>
+</script>
+
+</body>
+</html>
