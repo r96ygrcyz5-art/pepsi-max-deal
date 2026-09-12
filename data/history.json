@@ -1,0 +1,46 @@
+{
+  "product_id": 23023,
+  "snapshots": [
+    {
+      "date": "2026-09-12",
+      "prices": {
+        "Morrisons": {
+          "price": 8.0,
+          "regular_price": 8.0,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        },
+        "Sainsbury's": {
+          "price": 8.5,
+          "regular_price": 12.5,
+          "loyalty_price": 8.5,
+          "multibuy_price_each": null
+        },
+        "Tesco": {
+          "price": 11.75,
+          "regular_price": 11.75,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        },
+        "Asda": {
+          "price": 12.5,
+          "regular_price": 12.5,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        },
+        "Ocado": {
+          "price": 12.5,
+          "regular_price": 12.5,
+          "loyalty_price": null,
+          "multibuy_price_each": 10.0
+        },
+        "Iceland": {
+          "price": 12.5,
+          "regular_price": 12.5,
+          "loyalty_price": null,
+          "multibuy_price_each": 9.0
+        }
+      }
+    }
+  ]
+}
