@@ -3057,6 +3057,47 @@
           "multibuy_price_each": null
         }
       }
+    },
+    {
+      "date": "2026-11-26",
+      "prices": {
+        "Asda": {
+          "price": 8.0,
+          "regular_price": 8.0,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        },
+        "Iceland": {
+          "price": 8.0,
+          "regular_price": 8.0,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        },
+        "Tesco": {
+          "price": 8.0,
+          "regular_price": 12.25,
+          "loyalty_price": 8.0,
+          "multibuy_price_each": null
+        },
+        "Sainsbury's": {
+          "price": 8.0,
+          "regular_price": 12.5,
+          "loyalty_price": 8.0,
+          "multibuy_price_each": null
+        },
+        "Morrisons": {
+          "price": 12.5,
+          "regular_price": 12.5,
+          "loyalty_price": null,
+          "multibuy_price_each": 9.0
+        },
+        "Ocado": {
+          "price": 12.5,
+          "regular_price": 12.5,
+          "loyalty_price": null,
+          "multibuy_price_each": null
+        }
+      }
     }
   ]
 }
